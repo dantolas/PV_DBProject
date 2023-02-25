@@ -1,0 +1,6 @@
+{
+    "supportedTables":
+    [
+       "country","orders"
+    ]
+}

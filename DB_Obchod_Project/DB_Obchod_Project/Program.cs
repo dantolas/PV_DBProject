@@ -1,4 +1,8 @@
-﻿using System.Data.SqlClient;
+﻿using DB_Obchod_Project.DAOs;
+using DB_Obchod_Project.table_objects;
+using System.Data;
+using System.Data.Common;
+using System.Data.SqlClient;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
@@ -117,6 +121,7 @@ namespace DB_Obchod_Project
                         Console.WriteLine(
                             "showtables => Shows existing tables in db"+
                             "\n|\nimport => Import data from .json file to a table"
+                            +"\n|\nselect => Prints data from table."
                             );
                         break;
                     #endregion
@@ -136,16 +141,76 @@ namespace DB_Obchod_Project
 
                     #region<Import command>
                     case "import":
-                        Console.Write("Enter table name\n->");
+                        
+                        //
+                        //Exists to store currently supported tables
+                        //
+                        string[] supportedTables = Array.Empty<string>();
+                        #region<Reading config files supported tables>
+                        try
+                        {
+                            json = File.ReadAllText("config/import_config.json");
+
+                            jsonObject = JsonSerializer.Deserialize<JsonObject>(json);
+                            try
+                            {   
+                                //
+                                //Exists to cut out a usable string from the JSONNode containing the tables
+                                //
+                                string cutout = jsonObject["supportedTables"].ToString().Replace("[", "").Replace("]", "").Replace("\"", "");
+                                
+                                //
+                                //Effective white space replacement
+                                //
+                                cutout = new string(cutout.ToCharArray().Where(c => !Char.IsWhiteSpace(c)).ToArray());
+                                supportedTables = cutout.Split(',');
+                                
+                                //
+                                //Weird bug when JSONArray was empty it still stored the empty value, this fixes it
+                                //
+                                if (supportedTables[0].Equals("")) supportedTables = Array.Empty<string>();
+
+                            }
+                            catch (Exception e)
+                            {
+                                Console.WriteLine(e.Message);
+                            }
+
+                        }
+                        catch (Exception e)
+                        {
+                            Console.WriteLine("Error: import_config.json file missing or not set up properly. Please check that it is present in config folder and set up properly.");
+                            continue;
+                        }
+                        #endregion
+                        
+                        if(supportedTables.Length <= 0) 
+                        {
+                            Console.WriteLine("No tables currently supported.");
+                            break;
+                        }
+                        
+                        Console.WriteLine("Supported tables:");
+                        foreach(string s in supportedTables)
+                        {
+                            Console.Write(s+" ");
+                        }
+
+                        Console.Write("\nEnter table name\n->");
                         string table = Console.ReadLine();
                         if (table == null) continue;
+                        if (table.ToLower().Equals("exit")) continue;
 
 
+                        string[] tables = getTables(consStringBuilder.ConnectionString).Split("\n");
+                        if (!TableExists(consStringBuilder.ConnectionString,table)) { Console.WriteLine("Table does not exist.");  continue; }
 
+                        if (!supportedTables.Contains(table.ToLower())) { Console.WriteLine("Table not currently supported"); continue;}
 
                         Console.Write("Enter file path name\n->");
                         string path = Console.ReadLine();
                         if(path == null) continue;
+                        if (path.ToLower().Equals("exit")) continue;
 
                         try
                         {
@@ -159,7 +224,42 @@ namespace DB_Obchod_Project
 
 
                         break;
-                        #endregion
+                    #endregion
+
+                    case "select":
+
+                        Console.WriteLine("Enter the table you wish to select from.");
+                        input= Console.ReadLine();
+                        if(input == null) continue;
+                        if(input.ToLower().Equals("exit")) continue;
+                        if (!TableExists(consStringBuilder.ConnectionString, input)) { Console.WriteLine("Table does not exist."); continue; }
+                        input = input.ToLower();
+                        switch (input)
+                        {
+                            default:
+
+                                Console.WriteLine("Error: Something went wrong.");
+                                break;
+
+                            case "orders" :
+                                List<Order> orders = OrdersDAO.GetAll(consStringBuilder.ConnectionString).ToList();
+                                foreach (Order order in orders)
+                                {
+                                    Console.WriteLine(order);
+                                }
+                                break;
+
+                            case "country":
+                                List<Country> countries = CountryDAO.GetAll(consStringBuilder.ConnectionString).ToList();
+                                foreach(Country country in countries)
+                                {
+                                    Console.WriteLine(country);
+                                }
+                                break;
+
+                        }
+
+                        break;
 
                 }
                 #endregion
@@ -196,6 +296,7 @@ namespace DB_Obchod_Project
             Console.ReadLine();
         }
 
+        #region <Returns existing tables in db>
         public static string getTables(string connectionString)
         {
             using (SqlConnection connection = new SqlConnection(connectionString))
@@ -215,6 +316,13 @@ namespace DB_Obchod_Project
                 }
 
             }
+        }
+        #endregion
+
+        public static bool TableExists(string connectionString,string tableName)
+        {
+            string[] tables = getTables(connectionString).Split("\n");
+            return tables.Contains(tableName.ToLower());
         }
     }
 }

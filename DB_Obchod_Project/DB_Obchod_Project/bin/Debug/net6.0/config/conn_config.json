@@ -1,0 +1,8 @@
+{
+    "userId" : "kuta",
+    "password" : "student",
+    "initialCatalog" : "kuta",
+    "dataSource" : "193.85.203.188",
+    "connTimeout" : "2",
+    "persistSecurityInfo" : "true"
+}

@@ -291,6 +291,8 @@ insert into order_item (product_id, amount, price, order_id) values (22, 18, 0, 
 
 select * from order_item where order_id = 43;
 
+select * from order_item;
+
 update order_item 
 set order_item.price = amount * product.price
 from product inner join order_item on order_item.product_id = product.id;

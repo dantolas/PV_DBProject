@@ -1,12 +1,13 @@
-﻿using DB_Obchod_Project.DAOs;
-using DB_Obchod_Project.table_objects;
+﻿using DB_Obchod_Project.table_objects;
 using System.Data;
 using System.Data.Common;
 using System.Data.SqlClient;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Security.Principal;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 
 namespace DB_Obchod_Project
 {
@@ -107,6 +108,13 @@ namespace DB_Obchod_Project
                 string input = Console.ReadLine();
                 if (input == null) continue;
 
+
+
+                //
+                //Defining local variables for all commands
+                //
+                Regex regexp = new Regex("^(\\d+)$");
+                int id = 0;
                 #region<Commands>
                 switch (input.ToLower())
                 {
@@ -116,12 +124,23 @@ namespace DB_Obchod_Project
                         break;
                     #endregion
 
+                    #region<Exit>
+                    case "exit":
+                        System.Environment.Exit(0);
+                        
+                        break;
+                    #endregion
+
                     #region <Help> 
                     case "help":
                         Console.WriteLine(
                             "showtables => Shows existing tables in db"+
                             "\n|\nimport => Import data from .json file to a table"
-                            +"\n|\nselect => Prints data from table."
+                            +"\n|\nselect => Prints all data from table."
+                            + "\n|\nselectId => Prints data row from table by id."
+                            + "\n|\newOrder => Create a new order and save it to db."
+                            + "\n|\nexit => Exits application."
+                            
                             );
                         break;
                     #endregion
@@ -226,6 +245,7 @@ namespace DB_Obchod_Project
                         break;
                     #endregion
 
+                    #region <Select Command>
                     case "select":
 
                         Console.WriteLine("Enter the table you wish to select from.");
@@ -238,62 +258,360 @@ namespace DB_Obchod_Project
                         {
                             default:
 
-                                Console.WriteLine("Error: Something went wrong.");
+                                Console.WriteLine("Error: Cannot select from "+input+" at the moment.");
                                 break;
 
                             case "orders" :
-                                List<Order> orders = OrdersDAO.GetAll(consStringBuilder.ConnectionString).ToList();
-                                foreach (Order order in orders)
+                                try
                                 {
-                                    Console.WriteLine(order);
+                                    List<Order> orders = Order.GetAll(consStringBuilder.ConnectionString).ToList();
+                                    foreach (Order order in orders)
+                                    {
+                                        Console.WriteLine(order);
+                                    }
                                 }
+                                catch (Exception e)
+                                {
+                                    Console.WriteLine("Error: Could not connect to server.");
+                                    Console.WriteLine(e.Message);
+                                }
+                                
                                 break;
 
                             case "country":
-                                List<Country> countries = CountryDAO.GetAll(consStringBuilder.ConnectionString).ToList();
-                                foreach(Country country in countries)
+                                try
                                 {
-                                    Console.WriteLine(country);
+                                    List<Country> countries = Country.GetAll(consStringBuilder.ConnectionString).ToList();
+                                    foreach (Country country in countries)
+                                    {
+                                        Console.WriteLine(country);
+                                    }
                                 }
+                                catch (Exception e)
+                                {
+                                    Console.WriteLine("Error: Could not connect to server.");
+                                    Console.WriteLine(e.Message);
+                                }
+                                
+                                break;
+
+
+                            case "manufacturer":
+                                try
+                                {
+                                    List<Manufacturer> manufacturers = Manufacturer.GetAll(consStringBuilder.ConnectionString).ToList();
+                                    foreach (Manufacturer manufacturer in manufacturers)
+                                    {
+                                        Console.WriteLine(manufacturer);
+                                    }
+                                }
+                                catch(Exception e)
+                                {
+                                    Console.WriteLine("Error: Could not connect to server.");
+                                    Console.WriteLine(e.Message);
+                                }
+                                
+                                break;
+
+                            case "product":
+                                try
+                                {
+                                    List<Product> products = Product.GetAll(consStringBuilder.ConnectionString).ToList();
+                                    foreach (Product prod in products)
+                                    {
+                                        Console.WriteLine(prod);
+                                    }
+                                }
+                                catch (Exception e)
+                                {
+                                    Console.WriteLine("Error: Could not connect to server.");
+                                    Console.WriteLine(e.Message);
+                                    Console.WriteLine(e.StackTrace);
+                                }
+
+                                break;
+
+                            case "order_item":
+                                try
+                                {
+                                    List<Order_item> ois= Order_item.GetAll(consStringBuilder.ConnectionString).ToList();
+                                    foreach (Order_item oi in ois)
+                                    {
+                                        Console.WriteLine(oi);
+                                    }
+                                }
+                                catch (Exception e)
+                                {
+                                    Console.WriteLine("Error: Could not connect to server.");
+                                    Console.WriteLine(e.Message);
+                                    Console.WriteLine(e.StackTrace);
+                                }
+
                                 break;
 
                         }
 
                         break;
+                    #endregion
 
+                    #region<SelectId Command>
+                    case "selectid":
+
+                        Console.WriteLine("Enter the table you wish to select from.");
+                        input = Console.ReadLine();
+                        if (input == null) continue;
+                        if (input.ToLower().Equals("exit")) continue;
+                        if (!TableExists(consStringBuilder.ConnectionString, input)) { Console.WriteLine("Table does not exist."); continue; }
+                        input = input.ToLower();
+
+                        switch (input)
+                        {
+
+                            default:
+                                
+                                
+                                Console.WriteLine("Cannot select from "+input+" at the moment.");
+                                break;
+
+                            case"orders":
+
+                                Console.Write("Enter id\n->");
+                                input = Console.ReadLine();
+                                if (input == null) continue;
+                                if (input.ToLower().Equals("exit")) continue;
+
+                                 regexp = new Regex("^(\\d+)$");
+                                while (!regexp.IsMatch(input))
+                                {
+                                    Console.Write("Please enter a positive integer.\n->");
+                                    input= Console.ReadLine();
+                                    if (input == null) continue;
+                                    if (input.ToLower().Equals("exit")) continue;
+                                }
+
+                                id = Convert.ToInt32(input);
+
+                                if(Order.GetByID(consStringBuilder.ConnectionString,id) == null)
+                                {
+                                    Console.WriteLine("No order with that id.");
+                                    break;
+                                }
+
+                                Console.WriteLine(Order.GetByID(consStringBuilder.ConnectionString,id));
+
+                                break;
+
+
+                            case "country":
+
+                                Console.Write("Enter id\n->");
+                                input = Console.ReadLine();
+                                if (input == null) continue;
+                                if (input.ToLower().Equals("exit")) continue;
+
+                                 regexp = new Regex("^(\\d+)$");
+                                while (!regexp.IsMatch(input))
+                                {
+                                    Console.Write("Please enter a positive integer.\n->");
+                                    input = Console.ReadLine();
+                                    if (input == null) continue;
+                                    if (input.ToLower().Equals("exit")) continue;
+                                }
+
+                                id = Convert.ToInt32(input);
+
+                                if (Country.GetByID(consStringBuilder.ConnectionString, id) == null)
+                                {
+                                    Console.WriteLine("No country with that id.");
+                                    break;
+                                }
+
+                                Console.WriteLine(Country.GetByID(consStringBuilder.ConnectionString, id));
+
+                                break;
+
+
+                            case "order_item":
+
+                                Console.Write("Enter id\n->");
+                                input = Console.ReadLine();
+                                if (input == null) continue;
+                                if (input.ToLower().Equals("exit")) continue;
+
+                                regexp = new Regex("^(\\d+)$");
+                                while (!regexp.IsMatch(input))
+                                {
+                                    Console.Write("Please enter a positive integer.\n->");
+                                    input = Console.ReadLine();
+                                    if (input == null) continue;
+                                    if (input.ToLower().Equals("exit")) continue;
+                                }
+
+                                id = Convert.ToInt32(input);
+
+                                if (Order_item.GetByID(consStringBuilder.ConnectionString, id) == null)
+                                {
+                                    Console.WriteLine("No order items with that id.");
+                                    break;
+                                }
+
+                                Console.WriteLine(Order_item.GetByID(consStringBuilder.ConnectionString, id));
+
+                                break;
+
+
+                            case "product":
+
+                                Console.Write("Enter id\n->");
+                                input = Console.ReadLine();
+                                if (input == null) continue;
+                                if (input.ToLower().Equals("exit")) continue;
+
+                                regexp = new Regex("^(\\d+)$");
+                                while (!regexp.IsMatch(input))
+                                {
+                                    Console.Write("Please enter a positive integer.\n->");
+                                    input = Console.ReadLine();
+                                    if (input == null) continue;
+                                    if (input.ToLower().Equals("exit")) continue;
+                                }
+
+                                id = Convert.ToInt32(input);
+
+                                if (Product.GetByID(consStringBuilder.ConnectionString, id) == null)
+                                {
+                                    Console.WriteLine("No products with that id.");
+                                    break;
+                                }
+
+                                Console.WriteLine(Product.GetByID(consStringBuilder.ConnectionString, id));
+
+                                break;
+
+                            case "manufacturer":
+
+                                Console.Write("Enter id\n->");
+                                input = Console.ReadLine();
+                                if (input == null) continue;
+                                if (input.ToLower().Equals("exit")) continue;
+
+                                while (!regexp.IsMatch(input))
+                                {
+                                    Console.Write("Please enter a positive integer.\n->");
+                                    input = Console.ReadLine();
+                                    if (input == null) continue;
+                                    if (input.ToLower().Equals("exit")) continue;
+                                }
+
+                                id = Convert.ToInt32(input);
+
+                                if (Manufacturer.GetByID(consStringBuilder.ConnectionString, id) == null)
+                                {
+                                    Console.WriteLine("No manufacturers with that id.");
+                                    break;
+                                }
+
+                                Console.WriteLine(Manufacturer.GetByID(consStringBuilder.ConnectionString, id));
+
+                                break;
+                        }
+                        break;
+                    #endregion
+
+                    #region<NewOrder Command>
+                    case "neworder":
+
+                        Order o = new Order();
+                        List<Order_item> items = new List<Order_item>();
+
+                        Console.WriteLine("**Phase:Creating order**");
+                        Console.WriteLine("Please enter order number:");
+                        input = Console.ReadLine();
+                        if (input == null) continue;
+                        if (input.ToLower().Equals("exit")) continue;
+
+                        while (!regexp.IsMatch(input))
+                        {
+                            Console.Write("Please enter a positive integer.\n->");
+                            input = Console.ReadLine();
+                            if (input == null) continue;
+                            if (input.ToLower().Equals("exit")) continue;
+                        }
+
+                        o.Number = Convert.ToInt32(input) * 271;
+
+                        Console.WriteLine("Add items to order? Y/N");
+                        input = Console.ReadLine();
+                        if (input == null) continue;
+                        if (input.ToLower().Equals("exit")) continue;
+                        if (input.ElementAt(0).ToString().ToLower().Equals("y"))
+                        {
+                            bool addingItems = true;
+                            while (addingItems)
+                            {
+                                Order_item item = new Order_item();
+                                Console.WriteLine("**Phase:Adding items**\n");
+
+                                Console.WriteLine("Please select the product you wish to order. (By product id)");
+                                input = Console.ReadLine();
+                                if (input == null) continue;
+                                if (input.ToLower().Equals("exit")) { addingItems = false; continue; };
+                                while (!regexp.IsMatch(input))
+                                {
+                                    Console.Write("Please enter a positive integer.\n->");
+                                    input = Console.ReadLine();
+                                    if (input == null) continue;
+                                    if (input.ToLower().Equals("exit")) continue;
+                                }
+
+                                id = Convert.ToInt32(input);
+                                if (Product.GetByID(consStringBuilder.ConnectionString,id) == null) { Console.WriteLine("This product does not exist."); continue; }
+                                Product currentProduct = Product.GetByID(consStringBuilder.ConnectionString, id);
+
+                                Console.WriteLine("Please enter the amount you wish to order.");
+
+                                input = Console.ReadLine();
+                                if (input == null) continue;
+                                if (input.ToLower().Equals("exit")) { addingItems = false; continue; };
+                                while (!regexp.IsMatch(input))
+                                {
+                                    Console.Write("Please enter a positive integer.\n->");
+                                    input = Console.ReadLine();
+                                    if (input == null) continue;
+                                    if (input.ToLower().Equals("exit")) continue;
+                                }
+
+
+                                item.Product_id = currentProduct.Id;
+                                item.Amount = Convert.ToInt32(input);
+                                item.Price = item.Amount * currentProduct.Price;
+
+                                items.Add(item);
+
+                                Console.WriteLine("Would you like to order another item? Y/N");
+                                input = Console.ReadLine();
+                                if (input == null) continue;
+                                if (!input.ElementAt(0).ToString().ToLower().Equals("y")) addingItems = false; 
+
+                            }
+
+                            
+
+                            Order.SaveWithItems(consStringBuilder.ConnectionString, o, items);
+                            Console.WriteLine();
+
+                        }
+
+
+                        
+
+
+
+                        break;
+                    #endregion
                 }
                 #endregion
             }
-
-
-            try
-            {
-                using (SqlConnection connection = new SqlConnection(consStringBuilder.ConnectionString))
-                {
-                    connection.Open();
-                    Console.WriteLine("Connected");
-
-                    //Načtení dat z tabulky:
-
-                    string query = "select * from country";
-                    using (SqlCommand command = new SqlCommand(query, connection))
-                    {
-                        SqlDataReader reader = command.ExecuteReader();
-                        while (reader.Read())
-                        {
-                            Console.WriteLine(reader[0].ToString() + " " + reader[1].ToString());
-                        }
-                    }
-
-                }
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("Exception");
-                Console.WriteLine(e.Message);
-            }
-
-            Console.ReadLine();
         }
 
         #region <Returns existing tables in db>
@@ -319,10 +637,12 @@ namespace DB_Obchod_Project
         }
         #endregion
 
+        #region <Determines if input exists as table in db>
         public static bool TableExists(string connectionString,string tableName)
         {
             string[] tables = getTables(connectionString).Split("\n");
             return tables.Contains(tableName.ToLower());
         }
+        #endregion
     }
 }

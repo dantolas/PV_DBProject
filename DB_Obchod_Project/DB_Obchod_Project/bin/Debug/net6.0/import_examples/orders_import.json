@@ -1,0 +1,20 @@
+{
+    "orders":
+    [
+        {
+            "number":"321321321",
+            "total_price":"0",
+            "date":"date",
+            "paid":"1",
+            "items":
+            [
+                {
+                    "product_id":"0",
+                    "amount":"1",
+                    "price":"0"
+                }
+            ]
+            
+        }
+    ]
+}

@@ -3,6 +3,6 @@
     "password" : "student",
     "initialCatalog" : "kuta",
     "dataSource" : "193.85.203.188",
-    "connTimeout" : "2",
+    "connTimeout" : "5",
     "persistSecurityInfo" : "true"
 }

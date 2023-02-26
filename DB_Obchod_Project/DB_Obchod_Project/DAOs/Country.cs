@@ -1,18 +1,49 @@
-﻿using DB_Obchod_Project.table_objects;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DB_Obchod_Project.DAOs
+namespace DB_Obchod_Project.table_objects
 {
-    internal class CountryDAO
+    internal class Country
     {
+        public int Id { get; set; }
+
+        public string Name { get; set; }
+
+        public int Population { get; set; }
+
+        public int Size { get; set; }
+
+
+        public Country(int id, string name, int population, int size) 
+        { 
+            this.Id= id;
+            this.Name = name;
+            this.Population = population;
+            this.Size = size;
+        }
+
+        public Country(string name, int population, int size)
+        {
+            this.Name = name;
+            this.Population = population;
+            this.Size = size;
+        }
+
+        public override string ToString()
+        {
+            return "Id:"+this.Id+" | Name:" + this.Name + " | Population:" + this.Population + " | Size:" + Size;
+        }
+
+
+
+        #region <DAO Methods>
         public static void Delete(string connectionString, Country element)
         {
-            using (SqlCommand command = new SqlCommand("SELECT * FROM country WHERE id = @id", new SqlConnection(connectionString)))
+            using (SqlCommand command = new SqlCommand("DELETE FROM country WHERE id = @id", new SqlConnection(connectionString)))
             {
                 command.Connection.Open();
 
@@ -32,8 +63,8 @@ namespace DB_Obchod_Project.DAOs
                 SqlDataReader reader = command.ExecuteReader();
                 while (reader.Read())
                 {
-                    Country country= new Country(
-                        
+                    Country country = new Country(
+                        reader.GetInt32(0),
                         reader.GetString(1),
                         reader.GetInt32(2),
                         reader.GetInt32(3)
@@ -58,10 +89,11 @@ namespace DB_Obchod_Project.DAOs
 
                 SqlDataReader reader = command.ExecuteReader();
 
-                Country country= null;
+                Country? country = null;
                 while (reader.Read())
                 {
                     country = new Country(
+                        id,
                     reader.GetString(1),
                     reader.GetInt32(2),
                     reader.GetInt32(3)
@@ -76,7 +108,7 @@ namespace DB_Obchod_Project.DAOs
 
         public static void Save(string connectionString, Country element)
         {
-            SqlCommand command = null;
+            SqlCommand? command = null;
 
             if (element.Id < 1)
             {
@@ -105,6 +137,6 @@ namespace DB_Obchod_Project.DAOs
                 }
             }
         }
-
+        #endregion
     }
 }

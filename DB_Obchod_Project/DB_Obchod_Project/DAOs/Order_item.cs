@@ -39,7 +39,25 @@ namespace DB_Obchod_Project.table_objects
 
         public override string ToString()
         {
-            return "ID:" + this.Id + " | product_id:" + this.Product_id + " | amount:" + this.Amount + " | price:" + this.Price + " | order_id:" + this.Order_id;
+            string[] spacings = { "", "", "", "", ""};
+            for (int i = 4 - this.Id.ToString().Length; i > 0; i--)
+            {
+                spacings[0] += " ";
+            }
+            for (int i = 4 - this.Product_id.ToString().Length; i > 0; i--)
+            {
+                spacings[1] += " ";
+            }
+            for (int i = 4 - this.Amount.ToString().Length; i > 0; i--)
+            {
+                spacings[2] += " ";
+            }
+            for (int i = 7 - this.Price.ToString().Length; i > 0; i--)
+            {
+                spacings[3] += " ";
+            }
+
+            return "ID:" + this.Id + spacings[0] +" | product_id:" + this.Product_id + spacings[1] +" | amount:" + this.Amount + spacings[2]+" | price:" + this.Price + spacings[3] +" | order_id:" + this.Order_id;
         }
 
         #region<DAO Methods>
@@ -53,6 +71,23 @@ namespace DB_Obchod_Project.table_objects
                 param.ParameterName = "@id";
                 param.Value = element.Id;
                 element.Id = 0;
+                command.Parameters.Add(param);
+                command.ExecuteNonQuery();
+            }
+        }
+
+
+        public static void Delete(string connectionString, int id)
+        {
+            using (SqlCommand command = new SqlCommand("DELETE FROM order_item WHERE id = @id", new SqlConnection(connectionString)))
+            {
+                command.Connection.Open();
+
+                SqlParameter param = new SqlParameter();
+                param.ParameterName = "@id";
+                param.Value = id;
+                command.Parameters.Add(param);
+                command.ExecuteNonQuery();
             }
         }
 
@@ -77,6 +112,55 @@ namespace DB_Obchod_Project.table_objects
                 reader.Close();
             }
         }
+
+        public static IEnumerable<Order_item> GetAllByOrder(string connectionString,Order order)
+        {
+            using (SqlCommand command = new SqlCommand("SELECT * FROM order_item where order_id = @id", new SqlConnection(connectionString)))
+            {
+                command.Parameters.Add(new SqlParameter("@id", order.Id));
+
+                command.Connection.Open();
+
+                SqlDataReader reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    Order_item oi = new Order_item(
+                        reader.GetInt32(0),
+                        reader.GetInt32(1),
+                        reader.GetInt32(2),
+                        float.Parse(reader[3].ToString()),
+                        reader.GetInt32(4)
+                    );
+                    yield return oi;
+                }
+                reader.Close();
+            }
+        }
+
+        public static IEnumerable<Order_item> GetAllByProduct(string connectionString, Product product)
+        {
+            using (SqlCommand command = new SqlCommand("SELECT * FROM order_item where product_id = @id", new SqlConnection(connectionString)))
+            {
+                command.Parameters.Add(new SqlParameter("@id", product.Id));
+
+                command.Connection.Open();
+
+                SqlDataReader reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    Order_item oi = new Order_item(
+                        reader.GetInt32(0),
+                        reader.GetInt32(1),
+                        reader.GetInt32(2),
+                        float.Parse(reader[3].ToString()),
+                        reader.GetInt32(4)
+                    );
+                    yield return oi;
+                }
+                reader.Close();
+            }
+        }
+
 
         public static Order_item? GetByID(string connectionString, int id)
         {

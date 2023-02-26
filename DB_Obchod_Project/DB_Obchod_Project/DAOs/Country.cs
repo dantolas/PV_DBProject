@@ -35,7 +35,20 @@ namespace DB_Obchod_Project.table_objects
 
         public override string ToString()
         {
-            return "Id:"+this.Id+" | Name:" + this.Name + " | Population:" + this.Population + " | Size:" + Size;
+            string[] spacings = { "", "", ""};
+            for (int i = 4 - this.Id.ToString().Length; i > 0; i--)
+            {
+                spacings[0] += " ";
+            }
+            for (int i = 25 - this.Name.ToString().Length; i > 0; i--)
+            {
+                spacings[1] += " ";
+            }
+            for (int i = 7 - this.Population.ToString().Length; i > 0; i--)
+            {
+                spacings[2] += " ";
+            }
+            return "Id:" + this.Id + spacings[0] +" | Name:" + this.Name + spacings[1] +" | Population:" + this.Population + spacings[2] +" | Size:" + Size;
         }
 
 
@@ -51,6 +64,23 @@ namespace DB_Obchod_Project.table_objects
                 param.ParameterName = "@id";
                 param.Value = element.Id;
                 element.Id = 0;
+                command.Parameters.Add(param);
+                command.ExecuteNonQuery();
+            }
+        }
+
+        public static void Delete(string connectionString, int id)
+        {
+            using (SqlCommand command = new SqlCommand("DELETE FROM country WHERE id = @id", new SqlConnection(connectionString)))
+            {
+                command.Connection.Open();
+
+                SqlParameter param = new SqlParameter();
+                param.ParameterName = "@id";
+                param.Value = id;
+                command.Parameters.Add(param);
+                command.ExecuteNonQuery();
+
             }
         }
 

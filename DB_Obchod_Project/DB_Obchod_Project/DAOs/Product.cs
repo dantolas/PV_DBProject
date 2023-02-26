@@ -39,12 +39,20 @@ namespace DB_Obchod_Project.table_objects
 
         public override string ToString()
         {
-            string spacing = "";
-            for(int i = 5 - this.Manu_id.ToString().Length; i > 0; i--)
+            string[] spacings = {"","",""};
+            for(int i = 4 - this.Id.ToString().Length; i > 0; i--)
             {
-                spacing += " ";
+                spacings[0] += " ";
             }
-            return "Id:"+this.Id+" | Manu_Id:"+this.Manu_id+spacing+" | Name:"+this.Name+" | Type:"+this.Type + " | Price:"+this.Price;
+            for(int i = 4 - this.Manu_id.ToString().Length; i > 0; i--)
+            {
+                spacings[1] += " ";
+            }
+            for(int i = 35 - this.Name.ToString().Length; i > 0; i--)
+            {
+                spacings[2] += " ";
+            }
+            return "Id:" + this.Id + spacings[0] +" | Manu_Id:"+this.Manu_id+spacings[1]+" | Name:" + this.Name + spacings[2] +" | Type:"+this.Type + " | Price:"+this.Price;
         }
 
 
@@ -60,6 +68,22 @@ namespace DB_Obchod_Project.table_objects
                 param.ParameterName = "@id";
                 param.Value = element.Id;
                 element.Id = 0;
+                command.Parameters.Add(param);
+                command.ExecuteNonQuery();
+            }
+        }
+
+        public static void Delete(string connectionString, int id)
+        {
+            using (SqlCommand command = new SqlCommand("DELETE FROM product WHERE id = @id", new SqlConnection(connectionString)))
+            {
+                command.Connection.Open();
+
+                SqlParameter param = new SqlParameter();
+                param.ParameterName = "@id";
+                param.Value = id;
+                command.Parameters.Add(param);
+                command.ExecuteNonQuery();
             }
         }
 

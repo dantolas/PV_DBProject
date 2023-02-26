@@ -30,7 +30,16 @@ namespace DB_Obchod_Project.table_objects
 
         public override string ToString()
         {
-            return "Id:"+this.Id+" | Name:"+this.Name+" | country_id:"+this.country_id;
+            string[] spacings = { "", ""};
+            for (int i = 4 - this.Id.ToString().Length; i > 0; i--)
+            {
+                spacings[0] += " ";
+            }
+            for (int i = 50 - this.Name.ToString().Length; i > 0; i--)
+            {
+                spacings[1] += " ";
+            }
+            return "Id:" + this.Id + spacings[0] +" | Name:" + this.Name + spacings[1] +" | country_id:"+this.country_id;
         }
 
         #region<DAO Methods>
@@ -44,6 +53,19 @@ namespace DB_Obchod_Project.table_objects
                 param.ParameterName = "@id";
                 param.Value = element.Id;
                 element.Id = 0;
+            }
+        }
+
+        public static void Delete(string connectionString, int id)
+        {
+            using (SqlCommand command = new SqlCommand("DELETE FROM manufacturer WHERE id = @id", new SqlConnection(connectionString)))
+            {
+                command.Connection.Open();
+
+                SqlParameter param = new SqlParameter();
+                param.ParameterName = "@id";
+                param.Value = id;
+
             }
         }
 

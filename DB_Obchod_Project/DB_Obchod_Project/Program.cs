@@ -4,6 +4,7 @@ using System.Data.Common;
 using System.Data.SqlClient;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Security.Principal;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -118,7 +119,7 @@ namespace DB_Obchod_Project
                 #region<Commands>
                 switch (input.ToLower())
                 {
-                    #region<Deaulft-command unknown>
+                    #region<Default-command unknown>
                     default:
                         Console.WriteLine("Unknown command. Please type help for available actions.");
                         break;
@@ -138,7 +139,8 @@ namespace DB_Obchod_Project
                             "\n|\nimport => Import data from .json file to a table"
                             +"\n|\nselect => Prints all data from table."
                             + "\n|\nselectId => Prints data row from table by id."
-                            + "\n|\newOrder => Create a new order and save it to db."
+                            + "\n|\nnewOrder => Create a new order and save it to db."
+                            + "\n|\ndeleteId => Delete from table by id."
                             + "\n|\nexit => Exits application."
                             
                             );
@@ -235,6 +237,8 @@ namespace DB_Obchod_Project
                         {
                             json = File.ReadAllText(path);
                             Console.WriteLine(json);
+                            jsonObject = JsonSerializer.Deserialize<JsonObject>(json);
+                            Console.WriteLine(jsonObject);
                         }catch(Exception e)
                         {
                             Console.WriteLine(e.Message);
@@ -609,6 +613,208 @@ namespace DB_Obchod_Project
 
                         break;
                     #endregion
+
+                    #region <DeleteId command>
+                    case "deleteid":
+
+                        Console.WriteLine("Enter the table you wish to delete from.");
+                        input = Console.ReadLine();
+                        if (input == null) continue;
+                        if (input.ToLower().Equals("exit")) continue;
+                        if (!TableExists(consStringBuilder.ConnectionString, input)) { Console.WriteLine("Table does not exist."); continue; }
+                        input = input.ToLower();
+
+                        switch (input)
+                        {
+
+                            default:
+
+
+                                Console.WriteLine("Cannot select from " + input + " at the moment.");
+                                break;
+
+                            case "orders":
+
+                                Console.Write("Enter id\n->");
+                                input = Console.ReadLine();
+                                if (input == null) continue;
+                                if (input.ToLower().Equals("exit")) continue;
+
+                                regexp = new Regex("^(\\d+)$");
+                                while (!regexp.IsMatch(input))
+                                {
+                                    Console.Write("Please enter a positive integer.\n->");
+                                    input = Console.ReadLine();
+                                    if (input == null) continue;
+                                    if (input.ToLower().Equals("exit")) continue;
+                                }
+
+                                id = Convert.ToInt32(input);
+
+                                if (Order.GetByID(consStringBuilder.ConnectionString,id) == null) { Console.WriteLine("No order with that id."); continue; }
+
+                                Console.Write("Delete all associated order_items?Y/N\n->");
+
+                                input = Console.ReadLine();
+                                if (input == null) continue;
+                                if (input.ToLower().Equals("exit")) continue;
+                                
+                                //
+                                //Deleting all order_items linked to order
+                                //
+                                if (input.ElementAt(0).ToString().ToLower().Equals("y"))
+                                {
+                                    Order_item.GetAllByOrder(consStringBuilder.ConnectionString, Order.GetByID(consStringBuilder.ConnectionString, id)).ToList().ForEach(item => {
+                                        Order_item.Delete(consStringBuilder.ConnectionString, item); 
+                                        });
+                                }
+
+
+                                Order.Delete(consStringBuilder.ConnectionString, id);
+
+                                Console.WriteLine("Deleted Succesfully.");
+
+                                break;
+
+
+                            case "product":
+
+                                Console.Write("Enter id\n->");
+                                input = Console.ReadLine();
+                                if (input == null) continue;
+                                if (input.ToLower().Equals("exit")) continue;
+
+                                regexp = new Regex("^(\\d+)$");
+                                while (!regexp.IsMatch(input))
+                                {
+                                    Console.Write("Please enter a positive integer.\n->");
+                                    input = Console.ReadLine();
+                                    if (input == null) continue;
+                                    if (input.ToLower().Equals("exit")) continue;
+                                }
+
+                                id = Convert.ToInt32(input);
+
+                                if (Product.GetByID(consStringBuilder.ConnectionString, id) == null) { Console.WriteLine("No product with that id."); continue; }
+
+                                Console.WriteLine("All order_items having this product associated with them will also be deleted. Procceed?Y/N\n->");
+
+                                input = Console.ReadLine();
+                                if (input == null) continue;
+                                if (input.ToLower().Equals("exit")) continue;
+
+                                //
+                                //Deleting all order_items linked to order, and updating order price
+                                //
+                                if (input.ElementAt(0).ToString().ToLower().Equals("y"))
+                                {
+                                    Order_item.GetAllByProduct(consStringBuilder.ConnectionString, Product.GetByID(consStringBuilder.ConnectionString, id)).ToList().ForEach(item => {
+                                        
+                                        
+                                        o = Order.GetByID(consStringBuilder.ConnectionString, item.Order_id);
+                                        o.TotalPrice -= item.Price;
+                                        Order.Save(consStringBuilder.ConnectionString, o);
+                                        Order_item.Delete(consStringBuilder.ConnectionString, item);
+                                    });
+                                    
+                                    Product.Delete(consStringBuilder.ConnectionString, id);
+                                    Console.WriteLine("Deleted Succesfully.");
+                                }
+
+                                break;
+
+                            
+                            case "order_item":
+
+                                Console.Write("Enter id\n->");
+                                input = Console.ReadLine();
+                                if (input == null) continue;
+                                if (input.ToLower().Equals("exit")) continue;
+
+                                regexp = new Regex("^(\\d+)$");
+                                while (!regexp.IsMatch(input))
+                                {
+                                    Console.Write("Please enter a positive integer.\n->");
+                                    input = Console.ReadLine();
+                                    if (input == null) continue;
+                                    if (input.ToLower().Equals("exit")) continue;
+                                }
+
+                                id = Convert.ToInt32(input);
+                                //
+                                //Reducing price of order with this order_item associated to it
+                                //
+                                o = Order.GetByID(consStringBuilder.ConnectionString, Order_item.GetByID(consStringBuilder.ConnectionString, id).Order_id);
+                                o.TotalPrice -= Order_item.GetByID(consStringBuilder.ConnectionString, id).Price;
+                                Order.Save(consStringBuilder.ConnectionString,o);
+
+                                Order_item.Delete(consStringBuilder.ConnectionString, id);
+
+                                Console.WriteLine("Deleted Succesfully.");
+
+                                break;
+
+
+                            case "manufacturer":
+
+                                Console.WriteLine("Currently not implemented.");
+                                //Console.Write("Enter id\n->");
+                                //input = Console.ReadLine();
+                                //if (input == null) continue;
+                                //if (input.ToLower().Equals("exit")) continue;
+
+                                //regexp = new Regex("^(\\d+)$");
+                                //while (!regexp.IsMatch(input))
+                                //{
+                                //    Console.Write("Please enter a positive integer.\n->");
+                                //    input = Console.ReadLine();
+                                //    if (input == null) continue;
+                                //    if (input.ToLower().Equals("exit")) continue;
+                                //}
+
+                                //id = Convert.ToInt32(input);
+
+                                //if (Product.GetByID(consStringBuilder.ConnectionString, id) == null)
+                                //{
+                                //    Console.WriteLine("No products with that id.");
+                                //    break;
+                                //}
+
+                                //Console.WriteLine(Product.GetByID(consStringBuilder.ConnectionString, id));
+
+                                break;
+
+                            case "country":
+                                Console.WriteLine("Currently not implemented.");
+                                
+                                //Console.Write("Enter id\n->");
+                                //input = Console.ReadLine();
+                                //if (input == null) continue;
+                                //if (input.ToLower().Equals("exit")) continue;
+
+                                //while (!regexp.IsMatch(input))
+                                //{
+                                //    Console.Write("Please enter a positive integer.\n->");
+                                //    input = Console.ReadLine();
+                                //    if (input == null) continue;
+                                //    if (input.ToLower().Equals("exit")) continue;
+                                //}
+
+                                //id = Convert.ToInt32(input);
+
+                                //if (Manufacturer.GetByID(consStringBuilder.ConnectionString, id) == null)
+                                //{
+                                //    Console.WriteLine("No manufacturers with that id.");
+                                //    break;
+                                //}
+
+                                //Console.WriteLine(Manufacturer.GetByID(consStringBuilder.ConnectionString, id));
+
+                                break;
+                        }
+
+                        break;
+                        #endregion
                 }
                 #endregion
             }

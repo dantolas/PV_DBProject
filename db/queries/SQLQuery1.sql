@@ -3,6 +3,7 @@ SELECT
 FROM
   INFORMATION_SCHEMA.TABLES;
 
+  SELECT * FROM order_item where order_id = 81;
 
 create table country(
 	id int primary key identity(1,1),
@@ -180,6 +181,7 @@ insert into product (manu_id, _name, _type, price) values (25, 'Muffin - Zero Tr
 insert into product (manu_id, _name, _type, price) values (25, 'Okra', 'food', 39.4);
 insert into product (manu_id, _name, _type, price) values (4, 'Island Oasis - Magarita Mix', 'food', 39.2);
 insert into product (manu_id, _name, _type, price) values (10, 'Energy - Boo - Koo', 'food', 9.9);
+insert into product (manu_id, _name, _type, price) values (10, 'KookooBookoo - Boo - Koo', 'food', 9.9);
 
 select * from product;
 

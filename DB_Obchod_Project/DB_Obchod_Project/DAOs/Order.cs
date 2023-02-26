@@ -57,6 +57,22 @@ namespace DB_Obchod_Project
                 param.ParameterName = "@id";
                 param.Value = element.Id;
                 element.Id = 0;
+                command.Parameters.Add(param);
+                command.ExecuteNonQuery();
+            }
+        }
+
+        public static void Delete(string connectionString,int id)
+        {
+            using (SqlCommand command = new SqlCommand("DELETE FROM orders WHERE id = @id", new SqlConnection(connectionString)))
+            {
+                command.Connection.Open();
+
+                SqlParameter param = new SqlParameter();
+                param.ParameterName = "@id";
+                param.Value = id;
+                command.Parameters.Add(param);
+                command.ExecuteNonQuery();
             }
         }
 

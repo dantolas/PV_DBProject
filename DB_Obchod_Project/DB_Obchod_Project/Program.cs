@@ -236,9 +236,12 @@ namespace DB_Obchod_Project
                         try
                         {
                             json = File.ReadAllText(path);
-                            Console.WriteLine(json);
+                            
                             jsonObject = JsonSerializer.Deserialize<JsonObject>(json);
-                            Console.WriteLine(jsonObject);
+
+                            Console.WriteLine(jsonObject["orders"][1]);
+
+
                         }catch(Exception e)
                         {
                             Console.WriteLine(e.Message);

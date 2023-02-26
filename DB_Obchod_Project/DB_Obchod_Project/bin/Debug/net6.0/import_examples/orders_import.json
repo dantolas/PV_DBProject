@@ -3,18 +3,30 @@
     [
         {
             "number":"321321321",
-            "total_price":"0",
             "date":"date",
             "paid":"1",
             "items":
             [
                 {
-                    "product_id":"0",
-                    "amount":"1",
-                    "price":"0"
+                    "product_id":"2",
+                    "amount":"1"
+                }
+            ]
+            
+        },
+        {
+            "number":"123123123",
+            "date":"date",
+            "paid":"0",
+            "items":
+            [
+                {
+                    "product_id":"5",
+                    "amount":"3"
                 }
             ]
             
         }
+
     ]
 }

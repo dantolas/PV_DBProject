@@ -10,9 +10,9 @@
           ]
         },
         {
-            "Number":323231,
+            "Number":32311123,
             "Date":"2023-02-27T08:53:29.5627555+01:00",
-            "Paid":false,
+            "Paid":true,
             "Items":
             [
                 {"Product_id":3,"Amount":5},

@@ -20,6 +20,8 @@ namespace DB_Obchod_Project
         private List<Item> items;
         public List<Item> Items { get; set; }
 
+        public JOrder() { }
+
         public class Item
         {
             private int product_id;
@@ -37,11 +39,8 @@ namespace DB_Obchod_Project
         public override string ToString()
         {
             string itemsIn = " ";
-            //items.ForEach(x =>
-            //{
-            //    itemsIn += x.ToString();
-            //});
-            return "Number:"+this.number + " Date:" + this.date + " Paid:" + this.paid +" Items:"+ this.items + itemsIn; 
+            
+            return "Number:"+this.number + " Date:" + this.date + " Paid:" + this.paid +" Items:"+ this.Items.Count; 
         }
 
     }

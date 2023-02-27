@@ -1,6 +1,6 @@
 {
     "supportedTables":
     [
-       "orders"
+       "orders","country"
     ]
 }

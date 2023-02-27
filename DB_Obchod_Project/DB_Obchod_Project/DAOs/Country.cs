@@ -41,7 +41,7 @@ namespace DB_Obchod_Project.table_objects
             {
                 spacings[0] += " ";
             }
-            for (int i = 25 - this.Name.ToString().Length; i > 0; i--)
+            for (int i = 20 - this.Name.ToString().Length; i > 0; i--)
             {
                 spacings[1] += " ";
             }

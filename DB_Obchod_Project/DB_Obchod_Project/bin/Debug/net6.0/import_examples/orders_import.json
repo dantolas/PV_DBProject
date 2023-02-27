@@ -1,32 +1,21 @@
-{
-    "orders":
-    [
-        {
-            "number":"321321321",
-            "date":"date",
-            "paid":"1",
-            "items":
-            [
-                {
-                    "product_id":"2",
-                    "amount":"1"
-                }
-            ]
-            
+
+      [ {
+          "Number":323231,
+          "Date":"2023-02-27T08:53:29.5627555+01:00",
+          "Paid":false,
+          "Items":
+          [
+              {"Product_id":12,"Amount":5},
+              {"Product_id":10,"Amount":3}
+          ]
         },
         {
-            "number":"123123123",
-            "date":"date",
-            "paid":"0",
-            "items":
+            "Number":323231,
+            "Date":"2023-02-27T08:53:29.5627555+01:00",
+            "Paid":false,
+            "Items":
             [
-                {
-                    "product_id":"5",
-                    "amount":"3"
-                }
+                {"Product_id":3,"Amount":5},
+                {"Product_id":4,"Amount":3}
             ]
-            
-        }
-
-    ]
-}
+          }]

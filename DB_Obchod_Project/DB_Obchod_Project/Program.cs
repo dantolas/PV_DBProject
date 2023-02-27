@@ -10,6 +10,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 
+
 namespace DB_Obchod_Project
 {
     internal class Program
@@ -18,7 +19,29 @@ namespace DB_Obchod_Project
         {
             #region <ConnectionString>
             Console.WriteLine("Working directory:"+Directory.GetCurrentDirectory()+ "\n---------------------------------------------------------------------------------------------------------------");
+
+            JOrder jorder = new JOrder();
+            jorder.Number = 255;
+            jorder.Date = DateTime.Now;
+            List<JOrder.Item> itms = new List<JOrder.Item>();
+            itms.Add(new JOrder.Item() { Amount = 1, Product_id = 40 });
+            jorder.Items = itms;
+
+            string jstring = JsonSerializer.Serialize(jorder);
+            Console.WriteLine(jstring);
+
+            jstring = File.ReadAllText("import_examples/orders_import.json");
+            Console.WriteLine(jstring);
+            List<JOrder> ser = JsonSerializer.Deserialize<List<JOrder>>(jstring);
+            Console.WriteLine(ser);
+            foreach(JOrder j in ser)
+            {
+                Console.WriteLine(j);
+            }
             
+
+            
+
             string json = "";
             try 
             {
@@ -33,7 +56,7 @@ namespace DB_Obchod_Project
             
             
             SqlConnectionStringBuilder consStringBuilder = new SqlConnectionStringBuilder();
-            var jsonObject = JsonSerializer.Deserialize<JsonObject>(json);
+            var jsonObject =System.Text.Json.JsonSerializer.Deserialize<JsonObject>(json);
             #region <Testing connection config file>
             try
             {
@@ -116,6 +139,7 @@ namespace DB_Obchod_Project
                 //
                 Regex regexp = new Regex("^(\\d+)$");
                 int id = 0;
+
                 #region<Commands>
                 switch (input.ToLower())
                 {
@@ -172,7 +196,7 @@ namespace DB_Obchod_Project
                         {
                             json = File.ReadAllText("config/import_config.json");
 
-                            jsonObject = JsonSerializer.Deserialize<JsonObject>(json);
+                            jsonObject = System.Text.Json.JsonSerializer.Deserialize<JsonObject>(json);
                             try
                             {   
                                 //
@@ -237,14 +261,21 @@ namespace DB_Obchod_Project
                         {
                             json = File.ReadAllText(path);
                             
-                            jsonObject = JsonSerializer.Deserialize<JsonObject>(json);
+                            
+                            JOrder[] joorder = System.Text.Json.JsonSerializer.Deserialize<JOrder[]>(json);
 
-                            Console.WriteLine(jsonObject["orders"][1]);
+                            foreach(JOrder j in joorder)
+                            {
+                                Console.WriteLine(j);
+                            }
+
+                           
 
 
                         }catch(Exception e)
                         {
                             Console.WriteLine(e.Message);
+                            Console.WriteLine(e.StackTrace);
                         }
 
 

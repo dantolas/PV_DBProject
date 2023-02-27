@@ -17,6 +17,7 @@ namespace DB_Obchod_Project.table_objects
 
         public int Size { get; set; }
 
+        public Country() { }
 
         public Country(int id, string name, int population, int size) 
         { 

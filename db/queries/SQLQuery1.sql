@@ -369,3 +369,11 @@ where subselect.id = orders.id;
 update orders set orders.total_price = sum(order_item.price) from order_item;
 
 delete from orders where id < 41;
+
+
+
+
+
+SELECT *
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = 'orders';

@@ -8,6 +8,8 @@ namespace DB_Obchod_Project
 {
     internal class JOrder
     {
+        public int Id { get; set; }
+
         private int number;
         public int Number { get; set; }
 
@@ -17,10 +19,24 @@ namespace DB_Obchod_Project
         private bool paid;
         public bool Paid { get; set; }
 
-        private List<Item> items;
-        public List<Item> Items { get; set; }
 
         public JOrder() { }
+
+        public JOrder(int id, int number, DateTime date, bool paid)
+        {
+            Id = id;
+            Number = number;
+            this.Date = date;
+            this.Paid = paid;
+
+        }
+
+        public JOrder(int number, float totalPrice, DateTime date, bool paid)
+        {
+            this.Number = number;
+            this.Date = date;
+            this.Paid = paid;
+        }
 
         public class Item
         {
@@ -40,7 +56,7 @@ namespace DB_Obchod_Project
         {
             string itemsIn = " ";
             
-            return "Number:"+this.number + " Date:" + this.date + " Paid:" + this.paid +" Items:"+ this.Items.Count; 
+            return "Number:"+this.number + " Date:" + this.date + " Paid:" + this.paid +" Items:"; 
         }
 
     }

@@ -66,3 +66,4 @@ C:\Users\kuta\Desktop\temp\DB_Obchod_Project\DB_Obchod_Project\obj\Debug\net6.0\
 C:\Users\kuta\Desktop\temp\DB_Obchod_Project\DB_Obchod_Project\obj\Debug\net6.0\DB_Obchod_Project.pdb
 C:\Users\kuta\Desktop\temp\DB_Obchod_Project\DB_Obchod_Project\obj\Debug\net6.0\DB_Obchod_Project.genruntimeconfig.cache
 C:\Users\kuta\Desktop\temp\DB_Obchod_Project\DB_Obchod_Project\obj\Debug\net6.0\ref\DB_Obchod_Project.dll
+D:\School\programming\C#\DB_Project\DB_Obchod_Project\DB_Obchod_Project\bin\Debug\net6.0\Newtonsoft.Json.dll

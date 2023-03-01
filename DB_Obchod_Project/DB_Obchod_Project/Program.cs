@@ -5,6 +5,7 @@ using System.Data.SqlClient;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Runtime.Serialization;
 using System.Security.Principal;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -144,6 +145,7 @@ namespace DB_Obchod_Project
                             + "\n|\nselectId => Prints data row from table by id."
                             + "\n|\nnewOrder => Create a new order and save it to db."
                             + "\n|\ndeleteId => Delete from table by id."
+                            + "\n|\nupdate => Update a column in a table."
                             + "\n|\nexit => Exits application."
                             
                             );
@@ -163,6 +165,83 @@ namespace DB_Obchod_Project
                         break;
                     #endregion
 
+                    #region <Update command>
+                    case "update":
+                        Console.Write("Enter the table you wish to update.\n->");
+                        input = Console.ReadLine();
+                        if (input == null) continue;
+                        if (input.ToLower().Equals("exit")) continue;
+                        if (!TableExists(consStringBuilder.ConnectionString, input)) { Console.WriteLine("Table does not exist."); continue; }
+                        input = input.ToLower();
+
+                        List<string> cols = new List<string>();
+
+                        using (SqlConnection connection = new SqlConnection(consStringBuilder.ConnectionString))
+                        {
+                            connection.Open();
+
+                            string query = "SELECT COLUMN_NAME\r\nFROM INFORMATION_SCHEMA.COLUMNS\r\nWHERE TABLE_NAME = '"+input+"'";
+                            using (SqlCommand command = new SqlCommand(query, connection))
+                            {
+                                SqlDataReader reader = command.ExecuteReader();
+                                
+                                while (reader.Read())
+                                {
+                                    cols.Add(reader[0].ToString());
+                                }
+                            }
+
+                        }
+
+                        if (cols.Count <= 0) { Console.WriteLine("This table has no columns to update."); continue; }
+
+                        cols.ForEach(col =>
+                        {
+                            Console.WriteLine(col);
+                        });
+
+                        string table = input;
+
+                        Console.Write("Enter the column you wish to update\n->");
+                        input = Console.ReadLine();
+                        if (input == null) continue;
+                        if (input.ToLower().Equals("exit")) continue;
+                        input = input.ToLower();
+                        if (cols.Contains(input))
+                        {
+                            using (SqlConnection connection = new SqlConnection(consStringBuilder.ConnectionString))
+                            {
+                                connection.Open();
+
+                                string query = string.Format("SELECT DATA_TYPE\r\nFROM INFORMATION_SCHEMA.COLUMNS\r\nWHERE COLUMN_NAME = {0} AND TABLE_NAME = {1};", table,input);
+                                using (SqlCommand command = new SqlCommand(query, connection))
+                                {
+                                    SqlDataReader reader = command.ExecuteReader();
+
+                                    while (reader.Read())
+                                    {
+                                        Console.WriteLine(reader[0].ToString());
+                                    }
+                                }
+
+                            }
+
+                            while (true)
+                            {
+                                Console.WriteLine("Enter the new value");
+                                string updateValue = Console.ReadLine();
+                                if(updateValue == null) continue;
+
+                                
+
+                            }
+                            
+                            
+                        }
+
+
+                        break;
+                    #endregion
                     #region<Import command>
                     case "import":
                         
@@ -221,7 +300,7 @@ namespace DB_Obchod_Project
                         }
 
                         Console.Write("\nEnter table name\n->");
-                        string table = Console.ReadLine();
+                        table = Console.ReadLine();
                         if (table == null) continue;
                         if (table.ToLower().Equals("exit")) continue;
 
@@ -288,15 +367,26 @@ namespace DB_Obchod_Project
 
                             case "orders":
 
-                                List<JOrder> orders = JsonSerializer.Deserialize<List<JOrder>>(json);
+                                List<Order> orders = JsonSerializer.Deserialize<List<Order>>(json);
+
+                                List<JOrder> jorders = JsonSerializer.Deserialize<List<JOrder>>(json);
 
                                 if (orders == null) { Console.WriteLine("The import has failed. Please check that you entered the correct path and that the file is in correct Json format."); break; }
                                 if (orders.Count == 0) { Console.WriteLine("The import resulted in empty list."); break; }
 
+                                Console.WriteLine("Orders:");
                                 orders.ForEach(order =>
                                 {
                                     Console.WriteLine(order);
                                 });
+
+                                Console.WriteLine("Jorders:");
+                                jorders.ForEach(jorder =>
+                                {
+                                    Console.WriteLine(jorder);
+                                });
+
+
 
 
                                 Console.Write("Insert data into db?Y/N\n->");
@@ -836,58 +926,81 @@ namespace DB_Obchod_Project
 
                             case "manufacturer":
 
-                                Console.WriteLine("Currently not implemented.");
-                                //Console.Write("Enter id\n->");
-                                //input = Console.ReadLine();
-                                //if (input == null) continue;
-                                //if (input.ToLower().Equals("exit")) continue;
+                                
+                                Console.Write("Enter id\n->");
+                                input = Console.ReadLine();
+                                if (input == null) continue;
+                                if (input.ToLower().Equals("exit")) continue;
 
-                                //regexp = new Regex("^(\\d+)$");
-                                //while (!regexp.IsMatch(input))
-                                //{
-                                //    Console.Write("Please enter a positive integer.\n->");
-                                //    input = Console.ReadLine();
-                                //    if (input == null) continue;
-                                //    if (input.ToLower().Equals("exit")) continue;
-                                //}
+                                regexp = new Regex("^(\\d+)$");
+                                while (!regexp.IsMatch(input))
+                                {
+                                    Console.Write("Please enter a positive integer.\n->");
+                                    input = Console.ReadLine();
+                                    if (input == null) continue;
+                                    if (input.ToLower().Equals("exit")) continue;
+                                }
 
-                                //id = Convert.ToInt32(input);
+                                id = Convert.ToInt32(input);
 
-                                //if (Product.GetByID(consStringBuilder.ConnectionString, id) == null)
-                                //{
-                                //    Console.WriteLine("No products with that id.");
-                                //    break;
-                                //}
+                                if (Manufacturer.GetByID(consStringBuilder.ConnectionString, id) == null)
+                                {
+                                    Console.WriteLine("No manufacturer with that id.");
+                                    break;
+                                }
 
-                                //Console.WriteLine(Product.GetByID(consStringBuilder.ConnectionString, id));
+                                Console.WriteLine(Manufacturer.GetByID(consStringBuilder.ConnectionString, id));
 
-                                break;
+                                Console.WriteLine("Delete from db?Y/N");
+
+                                input = Console.ReadLine();
+                                if (input == null) continue;
+                                if (input.ToLower().Equals("exit")) continue;
+                                if (input.ElementAt(0).ToString().ToLower().Equals("y"))
+                                {
+                                    Manufacturer.Delete(consStringBuilder.ConnectionString,Manufacturer.GetByID(consStringBuilder.ConnectionString, id));
+                                }
+                                Console.WriteLine("Deleted succesfully");
+
+
+                                    break;
 
                             case "country":
-                                Console.WriteLine("Currently not implemented.");
                                 
-                                //Console.Write("Enter id\n->");
-                                //input = Console.ReadLine();
-                                //if (input == null) continue;
-                                //if (input.ToLower().Equals("exit")) continue;
 
-                                //while (!regexp.IsMatch(input))
-                                //{
-                                //    Console.Write("Please enter a positive integer.\n->");
-                                //    input = Console.ReadLine();
-                                //    if (input == null) continue;
-                                //    if (input.ToLower().Equals("exit")) continue;
-                                //}
+                                Console.Write("Enter id\n->");
+                                input = Console.ReadLine();
+                                if (input == null) continue;
+                                if (input.ToLower().Equals("exit")) continue;
 
-                                //id = Convert.ToInt32(input);
+                                while (!regexp.IsMatch(input))
+                                {
+                                    Console.Write("Please enter a positive integer.\n->");
+                                    input = Console.ReadLine();
+                                    if (input == null) continue;
+                                    if (input.ToLower().Equals("exit")) continue;
+                                }
 
-                                //if (Manufacturer.GetByID(consStringBuilder.ConnectionString, id) == null)
-                                //{
-                                //    Console.WriteLine("No manufacturers with that id.");
-                                //    break;
-                                //}
+                                id = Convert.ToInt32(input);
 
-                                //Console.WriteLine(Manufacturer.GetByID(consStringBuilder.ConnectionString, id));
+                                if (Country.GetByID(consStringBuilder.ConnectionString, id) == null)
+                                {
+                                    Console.WriteLine("No country with that id.");
+                                    break;
+                                }
+
+                                Console.WriteLine(Country.GetByID(consStringBuilder.ConnectionString, id));
+
+                                Console.WriteLine("Delete from db?Y/N");
+
+                                input = Console.ReadLine();
+                                if (input == null) continue;
+                                if (input.ToLower().Equals("exit")) continue;
+                                if (input.ElementAt(0).ToString().ToLower().Equals("y"))
+                                {
+                                    Country.Delete(consStringBuilder.ConnectionString, Country.GetByID(consStringBuilder.ConnectionString, id));
+                                }
+                                Console.WriteLine("Deleted succesfully");
 
                                 break;
                         }

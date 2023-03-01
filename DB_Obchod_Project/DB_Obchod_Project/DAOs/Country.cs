@@ -17,6 +17,7 @@ namespace DB_Obchod_Project.table_objects
 
         public int Size { get; set; }
 
+        public Country() { }
 
         public Country(int id, string name, int population, int size) 
         { 
@@ -40,7 +41,7 @@ namespace DB_Obchod_Project.table_objects
             {
                 spacings[0] += " ";
             }
-            for (int i = 25 - this.Name.ToString().Length; i > 0; i--)
+            for (int i = 20 - this.Name.ToString().Length; i > 0; i--)
             {
                 spacings[1] += " ";
             }

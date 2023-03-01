@@ -10,6 +10,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 
+
 namespace DB_Obchod_Project
 {
     internal class Program
@@ -18,7 +19,8 @@ namespace DB_Obchod_Project
         {
             #region <ConnectionString>
             Console.WriteLine("Working directory:"+Directory.GetCurrentDirectory()+ "\n---------------------------------------------------------------------------------------------------------------");
-            
+
+
             string json = "";
             try 
             {
@@ -33,7 +35,7 @@ namespace DB_Obchod_Project
             
             
             SqlConnectionStringBuilder consStringBuilder = new SqlConnectionStringBuilder();
-            var jsonObject = JsonSerializer.Deserialize<JsonObject>(json);
+            var jsonObject =System.Text.Json.JsonSerializer.Deserialize<JsonObject>(json);
             #region <Testing connection config file>
             try
             {
@@ -112,10 +114,11 @@ namespace DB_Obchod_Project
 
 
                 //
-                //Defining local variables for all commands
+                //Defining local variables for all commands to avoid multiple declarations
                 //
                 Regex regexp = new Regex("^(\\d+)$");
                 int id = 0;
+
                 #region<Commands>
                 switch (input.ToLower())
                 {
@@ -172,7 +175,7 @@ namespace DB_Obchod_Project
                         {
                             json = File.ReadAllText("config/import_config.json");
 
-                            jsonObject = JsonSerializer.Deserialize<JsonObject>(json);
+                            jsonObject = System.Text.Json.JsonSerializer.Deserialize<JsonObject>(json);
                             try
                             {   
                                 //
@@ -228,6 +231,7 @@ namespace DB_Obchod_Project
 
                         if (!supportedTables.Contains(table.ToLower())) { Console.WriteLine("Table not currently supported"); continue;}
 
+
                         Console.Write("Enter file path name\n->");
                         string path = Console.ReadLine();
                         if(path == null) continue;
@@ -236,15 +240,87 @@ namespace DB_Obchod_Project
                         try
                         {
                             json = File.ReadAllText(path);
-                            
-                            jsonObject = JsonSerializer.Deserialize<JsonObject>(json);
-
-                            Console.WriteLine(jsonObject["orders"][1]);
-
-
                         }catch(Exception e)
                         {
-                            Console.WriteLine(e.Message);
+                            Console.WriteLine("Error: File not found. Please check that you entered the correct path.");
+
+                            break;
+                        }
+
+                        switch (table.ToLower())
+                        {
+                            case "country":
+
+                                List<Country> countryList = JsonSerializer.Deserialize<List<Country>>(json);
+
+                                if (countryList == null) { Console.WriteLine("The import has failed. Please check that you entered the correct path and that the file is in correct Json format."); break; }
+                                if (countryList.Count == 0) { Console.WriteLine("The import resulted in empty list."); break; }
+
+                                foreach(Country c in countryList)
+                                {
+                                    Console.WriteLine(c);
+                                }
+
+
+                                Console.Write("Insert data into db?Y/N\n->");
+
+                                input = Console.ReadLine();
+                                if (input == null) continue;
+                                if (input.ToLower().Equals("exit")) continue;
+                                if (input.ElementAt(0).ToString().ToLower().Equals("y"))
+                                {
+                                    try
+                                    {
+                                        countryList.ForEach(country =>
+                                        {
+                                            Country.Save(consStringBuilder.ConnectionString, country);
+                                        });
+                                        Console.WriteLine("Data inserted to db.");
+                                    }
+                                    catch(Exception e)
+                                    {
+                                        Console.WriteLine("Insertion failed.");
+                                    }
+                                }
+
+                                
+                                break;
+
+                            case "orders":
+
+                                List<JOrder> orders = JsonSerializer.Deserialize<List<JOrder>>(json);
+
+                                if (orders == null) { Console.WriteLine("The import has failed. Please check that you entered the correct path and that the file is in correct Json format."); break; }
+                                if (orders.Count == 0) { Console.WriteLine("The import resulted in empty list."); break; }
+
+                                orders.ForEach(order =>
+                                {
+                                    Console.WriteLine(order);
+                                });
+
+
+                                Console.Write("Insert data into db?Y/N\n->");
+
+                                //input = Console.ReadLine();
+                                //if (input == null) continue;
+                                //if (input.ToLower().Equals("exit")) continue;
+                                //if (input.ElementAt(0).ToString().ToLower().Equals("y"))
+                                //{
+                                //    try
+                                //    {
+                                //        countryList.ForEach(country =>
+                                //        {
+                                //            Country.Save(consStringBuilder.ConnectionString, country);
+                                //        });
+                                //        Console.WriteLine("Data inserted to db.");
+                                //    }
+                                //    catch (Exception e)
+                                //    {
+                                //        Console.WriteLine("Insertion failed.");
+                                //    }
+                                //}
+
+                                break;
                         }
 
 

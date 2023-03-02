@@ -23,6 +23,7 @@ DB PROJEKT made by Kuta Samuel C3b
   You can also import data into database through this application, doing so by passing files written in the JSON format.
   
   | Quick Commands Explanations | 
+    
     showtables => Lists all tables in database.
    
     import => Import data from a .json file.
@@ -31,7 +32,13 @@ DB PROJEKT made by Kuta Samuel C3b
     
     selectId => Prints a specific data row by record ID.
     
+    newOrder => Lets the user create an entirely new  order along with some items, and inserts it into the database.
     
+    deleteId => Deletes a specific data row by record ID.
+    
+    update => Updates a column in db. (Currently not finished.)
+    
+*Quick tip: Typing exit at any time exits the current process, or the application itself.
     
     
     

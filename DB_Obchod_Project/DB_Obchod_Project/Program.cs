@@ -10,6 +10,7 @@ using System.Security.Principal;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
+using System.Xml.Linq;
 
 
 namespace DB_Obchod_Project
@@ -132,22 +133,22 @@ namespace DB_Obchod_Project
                     #region<Exit>
                     case "exit":
                         System.Environment.Exit(0);
-                        
+
                         break;
                     #endregion
 
                     #region <Help> 
                     case "help":
                         Console.WriteLine(
-                            "showtables => Shows existing tables in db"+
+                            "showtables => Shows existing tables in db" +
                             "\n|\nimport => Import data from .json file to a table"
-                            +"\n|\nselect => Prints all data from table."
+                            + "\n|\nselect => Prints all data from table."
                             + "\n|\nselectId => Prints data row from table by id."
                             + "\n|\nnewOrder => Create a new order and save it to db."
                             + "\n|\ndeleteId => Delete from table by id."
                             + "\n|\nupdate => Update a column in a table."
                             + "\n|\nexit => Exits application."
-                            
+
                             );
                         break;
                     #endregion
@@ -180,11 +181,11 @@ namespace DB_Obchod_Project
                         {
                             connection.Open();
 
-                            string query = "SELECT COLUMN_NAME\r\nFROM INFORMATION_SCHEMA.COLUMNS\r\nWHERE TABLE_NAME = '"+input+"'";
+                            string query = "SELECT COLUMN_NAME\r\nFROM INFORMATION_SCHEMA.COLUMNS\r\nWHERE TABLE_NAME = '" + input + "'";
                             using (SqlCommand command = new SqlCommand(query, connection))
                             {
                                 SqlDataReader reader = command.ExecuteReader();
-                                
+
                                 while (reader.Read())
                                 {
                                     cols.Add(reader[0].ToString());
@@ -207,39 +208,337 @@ namespace DB_Obchod_Project
                         if (input == null) continue;
                         if (input.ToLower().Equals("exit")) continue;
                         input = input.ToLower();
-                        if (cols.Contains(input))
+
+                        if (!cols.Contains(input)) { Console.WriteLine("That is not a valid column."); continue; }
+
+                        string column = input;
+
+                        string colDatatype = null;
+
+                        using (SqlConnection connection = new SqlConnection(consStringBuilder.ConnectionString))
                         {
-                            using (SqlConnection connection = new SqlConnection(consStringBuilder.ConnectionString))
-                            {
-                                connection.Open();
+                            connection.Open();
 
-                                string query = string.Format("SELECT DATA_TYPE\r\nFROM INFORMATION_SCHEMA.COLUMNS\r\nWHERE COLUMN_NAME = {0} AND TABLE_NAME = {1};", table,input);
-                                using (SqlCommand command = new SqlCommand(query, connection))
+                            string query = string.Format("SELECT DATA_TYPE\r\nFROM INFORMATION_SCHEMA.COLUMNS\r\nWHERE COLUMN_NAME = '{0}' AND TABLE_NAME = '{1}';", column, table);
+                            using (SqlCommand command = new SqlCommand(query, connection))
+                            {
+                                SqlDataReader reader = command.ExecuteReader();
+
+                                while (reader.Read())
                                 {
-                                    SqlDataReader reader = command.ExecuteReader();
-
-                                    while (reader.Read())
-                                    {
-                                        Console.WriteLine(reader[0].ToString());
-                                    }
+                                    colDatatype = reader[0].ToString();
                                 }
-
                             }
 
-                            while (true)
-                            {
-                                Console.WriteLine("Enter the new value");
-                                string updateValue = Console.ReadLine();
-                                if(updateValue == null) continue;
-
-                                
-
-                            }
-                            
-                            
                         }
 
+                        List<int> ids = new List<int>();
+                        do {
+                            Console.Write("Enter the ids of rows you wish to update seperated by a space. (123 23 2 5 67 ...)\n->");
+                            input = Console.ReadLine();
 
+                            
+                            string[] sIds = input.Split();
+                            foreach (string sId in sIds)
+                            {
+                                try
+                                {
+                                    ids.Add(Convert.ToInt16(sId));
+                                }
+                                catch (Exception ex)
+                                {
+                                    continue;
+                                }
+                            }
+                        } while (ids.Count == 0);
+
+                        while (true)
+                        {
+                            Console.Write("Enter the new value\n->");
+                            string updateValue = Console.ReadLine();
+                            if(updateValue == null) continue;
+                            if (input.ToLower().Equals("exit")) continue;
+
+                            SqlCommand command;
+
+                            switch (colDatatype)
+                            {
+
+                                default:
+
+                                    Console.WriteLine("Unable to convert to column data type.");
+                                    Console.WriteLine(colDatatype);
+                                    
+                                    break;
+                                    
+
+                                case "int":
+
+                                    try
+                                    {
+                                        int intValue = Convert.ToInt32(updateValue);
+                                        using (command = new SqlCommand("UPDATE @table set @col = @value where id = @id", new SqlConnection(consStringBuilder.ConnectionString)))
+                                        {
+                                            command.Connection.Open();
+                                            Console.WriteLine(table);
+                                            command.Parameters.Add(new SqlParameter("@table", table));
+                                            command.Parameters.Add(new SqlParameter("@col", column));
+                                            command.Parameters.Add(new SqlParameter("@value", intValue));
+                                            ids.ForEach(id =>
+                                            {
+                                                command.Parameters.Add(new SqlParameter("@id", id));
+                                                command.ExecuteNonQuery();
+                                            });
+
+                                            Console.WriteLine("Update succesfull");
+                                            
+                                        }
+                                        
+                                    }
+                                    catch (Exception e)
+                                    {
+                                        Console.WriteLine("Something went wrong while converting or updating the data. Please check that you entered the correct datatype according to the db column and try again.");
+                                        Console.WriteLine(e.Message);
+                                        Console.WriteLine(e.StackTrace);
+                                        continue;
+                                    }    
+
+                                    break;
+
+                                case "float":
+
+                                    try
+                                    {
+                                        float floatValue = float.Parse(updateValue);
+                                        using (command = new SqlCommand("UPDATE @table set @col = @value where id = @id", new SqlConnection(consStringBuilder.ConnectionString)))
+                                        {
+                                            command.Connection.Open();
+                                            Console.WriteLine(table);
+                                            command.Parameters.Add(new SqlParameter("@table", table));
+                                            command.Parameters.Add(new SqlParameter("@col", column));
+                                            command.Parameters.Add(new SqlParameter("@value", floatValue));
+                                            ids.ForEach(id =>
+                                            {
+                                                command.Parameters.Add(new SqlParameter("@id", id));
+                                                command.ExecuteNonQuery();
+                                            });
+
+                                            Console.WriteLine("Update succesfull");
+                                           
+                                        }
+                                    }
+                                    catch (Exception e)
+                                    {
+                                        Console.WriteLine("Something went wrong while converting the data. Please check that you entered the correct datatype according to the db column and try again.");
+                                        Console.WriteLine(e.Message);
+                                        Console.WriteLine(e.StackTrace);
+                                        continue;
+                                    }
+
+                                    break;
+
+                                case "bool":
+
+                                    try
+                                    {
+                                        bool boolValue = Convert.ToBoolean(updateValue);
+                                        using (command = new SqlCommand("UPDATE @table set @col = @value where id = @id", new SqlConnection(consStringBuilder.ConnectionString)))
+                                        {
+                                            command.Connection.Open();
+                                            Console.WriteLine(table);
+                                            command.Parameters.Add(new SqlParameter("@table", table));
+                                            command.Parameters.Add(new SqlParameter("@col", column));
+                                            command.Parameters.Add(new SqlParameter("@value", boolValue));
+                                            ids.ForEach(id =>
+                                            {
+                                                command.Parameters.Add(new SqlParameter("@id", id));
+                                                command.ExecuteNonQuery();
+                                            });
+
+                                            Console.WriteLine("Update succesfull");
+                                           
+                                        }
+                                    }
+                                    catch (Exception e)
+                                    {
+                                        Console.WriteLine("Something went wrong while converting the data. Please check that you entered the correct datatype according to the db column and try again.");
+                                        Console.WriteLine(e.Message);
+                                        Console.WriteLine(e.StackTrace);
+                                        continue;
+                                    }
+
+                                    break;
+
+                                case "bit":
+
+                                    try
+                                    {
+                                        bool boolValue = Convert.ToBoolean(updateValue);
+                                        using (command = new SqlCommand("UPDATE @table set @col = @value where id = @id", new SqlConnection(consStringBuilder.ConnectionString)))
+                                        {
+                                            command.Connection.Open();
+                                            Console.WriteLine(table);
+                                            command.Parameters.Add(new SqlParameter("@table", table));
+                                            command.Parameters.Add(new SqlParameter("@col", column));
+                                            command.Parameters.Add(new SqlParameter("@value", boolValue));
+                                            ids.ForEach(id =>
+                                            {
+                                                command.Parameters.Add(new SqlParameter("@id", id));
+                                                command.ExecuteNonQuery();
+                                            });
+
+                                            Console.WriteLine("Update succesfull");
+
+                                        }
+                                    }
+                                    catch (Exception e)
+                                    {
+                                        Console.WriteLine("Something went wrong while converting the data. Please check that you entered the correct datatype according to the db column and try again.");
+                                        Console.WriteLine(e.Message);
+                                        Console.WriteLine(e.StackTrace);
+                                        continue;
+                                    }
+
+                                    break;
+
+                                case "varchar":
+
+                                    try
+                                    {
+                                        using (command = new SqlCommand("UPDATE @table set @col = @value where id = @id", new SqlConnection(consStringBuilder.ConnectionString)))
+                                        {
+                                            command.Connection.Open();
+                                            Console.WriteLine(table);
+                                            command.Parameters.Add(new SqlParameter("@table", table));
+                                            command.Parameters.Add(new SqlParameter("@col", column));
+                                            command.Parameters.Add(new SqlParameter("@value", updateValue));
+                                            ids.ForEach(id =>
+                                            {
+                                                command.Parameters.Add(new SqlParameter("@id", id));
+                                                command.ExecuteNonQuery();
+                                            });
+
+                                            Console.WriteLine("Update succesfull");
+
+                                        }
+                                    }
+                                    catch (Exception e)
+                                    {
+                                        Console.WriteLine("Something went wrong while converting the data. Please check that you entered the correct datatype according to the db column and try again.");
+                                        Console.WriteLine(e.Message);
+                                        Console.WriteLine(e.StackTrace);
+                                        continue;
+                                    }
+
+                                    break;
+
+                                case "nvarchar":
+
+                                    try
+                                    {
+                                        
+                                        using (command = new SqlCommand("UPDATE @table set @col = @value where id = @id", new SqlConnection(consStringBuilder.ConnectionString)))
+                                        {
+                                            command.Connection.Open();
+                                            Console.WriteLine(table);
+                                            command.Parameters.Add(new SqlParameter("@table", table));
+                                            command.Parameters.Add(new SqlParameter("@col", column));
+                                            command.Parameters.Add(new SqlParameter("@value", updateValue));
+                                            ids.ForEach(id =>
+                                            {
+                                                command.Parameters.Add(new SqlParameter("@id", id));
+                                                command.ExecuteNonQuery();
+                                            });
+
+                                            Console.WriteLine("Update succesfull");
+
+                                        }
+                                    }
+                                    catch (Exception e)
+                                    {
+                                        Console.WriteLine("Something went wrong while converting the data. Please check that you entered the correct datatype according to the db column and try again.");
+                                        Console.WriteLine(e.Message);
+                                        Console.WriteLine(e.StackTrace);
+                                        continue;
+                                    }
+
+                                    break;
+
+                                case "number":
+
+                                    try
+                                    {
+                                        int intValue = Convert.ToInt32(updateValue);
+                                        using (command = new SqlCommand("UPDATE @table set @col = @value where id = @id", new SqlConnection(consStringBuilder.ConnectionString)))
+                                        {
+                                            command.Connection.Open();
+                                            Console.WriteLine(table);
+                                            command.Parameters.Add(new SqlParameter("@table", table));
+                                            command.Parameters.Add(new SqlParameter("@col", column));
+                                            command.Parameters.Add(new SqlParameter("@value", intValue));
+                                            ids.ForEach(id =>
+                                            {
+                                                command.Parameters.Add(new SqlParameter("@id", id));
+                                                command.ExecuteNonQuery();
+                                            });
+
+                                            Console.WriteLine("Update succesfull");
+
+                                        }
+                                    }
+                                    catch (Exception e)
+                                    {
+                                        Console.WriteLine("Something went wrong while converting the data. Please check that you entered the correct datatype according to the db column and try again.");
+                                        Console.WriteLine(e.Message);
+                                        Console.WriteLine(e.StackTrace);
+                                        continue;
+                                    }
+
+                                    break;
+
+
+                                case "date":
+
+                                    try
+                                    {
+                                        DateTime dateValue = DateTime.Parse(updateValue);
+                                        using (command = new SqlCommand("UPDATE @table set @col = @value where id = @id", new SqlConnection(consStringBuilder.ConnectionString)))
+                                        {
+                                            command.Connection.Open();
+                                            Console.WriteLine(table);
+                                            command.Parameters.Add(new SqlParameter("@table", table));
+                                            command.Parameters.Add(new SqlParameter("@col", column));
+                                            command.Parameters.Add(new SqlParameter("@value", dateValue));
+                                            ids.ForEach(id =>
+                                            {
+                                                command.Parameters.Add(new SqlParameter("@id", id));
+                                                command.ExecuteNonQuery();
+                                            });
+
+                                            Console.WriteLine("Update succesfull");
+
+                                        }
+
+
+                                    }
+                                    catch (Exception e)
+                                    {
+                                        Console.WriteLine("Something went wrong while converting the data. Please check that you entered the correct datatype according to the db column and try again.");
+                                        Console.WriteLine(e.Message);
+                                        Console.WriteLine(e.StackTrace);
+                                        continue;
+                                    }
+
+                                    break;
+                            }
+
+
+                        }
+                            
+                            
+                        
+
+                        Console.WriteLine();
                         break;
                     #endregion
                     #region<Import command>

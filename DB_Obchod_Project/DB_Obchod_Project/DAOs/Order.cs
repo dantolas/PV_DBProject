@@ -142,7 +142,7 @@ namespace DB_Obchod_Project
                     command.Connection.Open();
                     command.Parameters.Add(new SqlParameter("@number", element.Number));
                     command.Parameters.Add(new SqlParameter("@total_price", element.TotalPrice));
-                    command.Parameters.Add(new SqlParameter("@@_date", element.Date));
+                    command.Parameters.Add(new SqlParameter("@_date", element.Date));
                     command.Parameters.Add(new SqlParameter("@paid", element.Paid));
                     command.ExecuteNonQuery();
                     //zjistim id posledniho vlozeneho zaznamu

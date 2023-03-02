@@ -36,7 +36,7 @@ DB PROJEKT made by Kuta Samuel C3b
     
     deleteId => Deletes a specific data row by record ID.
     
-    update => Updates a column in db. (Currently not finished.)
+    update => Updates a column in db. (Currently not finished.).
     
 *Quick tip: Typing exit at any time exits the current process, or the application itself.
     
